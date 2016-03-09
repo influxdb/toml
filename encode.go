@@ -17,6 +17,7 @@ const (
 	tagOmitempty = "omitempty"
 	tagDocName   = "doc"
 	tagSkip      = "-"
+	indentStr    = "    "
 )
 
 // Marshal returns the TOML encoding of v.
@@ -43,7 +44,7 @@ const (
 //   // Note the leading comma.
 //   Field int `toml:",omitempty"`
 func Marshal(v interface{}) ([]byte, error) {
-	return marshal(nil, "", reflect.ValueOf(v), false, false)
+	return marshal(nil, "", "", reflect.ValueOf(v), false)
 }
 
 // A Encoder writes TOML to an output stream.
@@ -74,7 +75,7 @@ type Marshaler interface {
 	MarshalTOML() ([]byte, error)
 }
 
-func marshal(buf []byte, prefix string, rv reflect.Value, inArray, arrayTable bool) ([]byte, error) {
+func marshal(buf []byte, indent, prefix string, rv reflect.Value, inArray bool) ([]byte, error) {
 	rt := rv.Type()
 	for rt.Kind() == reflect.Ptr {
 		rv = rv.Elem()
@@ -108,11 +109,11 @@ func marshal(buf []byte, prefix string, rv reflect.Value, inArray, arrayTable bo
 		var err error
 		switch fv.Kind() {
 		case reflect.Struct, reflect.Map, reflect.Slice:
-			if tableBuf, err = encodeValue(tableBuf, prefix, colName, fv, inArray, arrayTable, docStr); err != nil {
+			if tableBuf, err = encodeValue(tableBuf, indent, prefix, colName, fv, inArray, docStr); err != nil {
 				return nil, err
 			}
 		default:
-			if valueBuf, err = encodeValue(valueBuf, prefix, colName, fv, inArray, arrayTable, docStr); err != nil {
+			if valueBuf, err = encodeValue(valueBuf, indent, prefix, colName, fv, inArray, docStr); err != nil {
 				return nil, err
 			}
 		}
@@ -120,29 +121,32 @@ func marshal(buf []byte, prefix string, rv reflect.Value, inArray, arrayTable bo
 	return append(append(buf, valueBuf...), tableBuf...), nil
 }
 
-func encodeValue(buf []byte, prefix, name string, fv reflect.Value, inArray, arrayTable bool, doc string) ([]byte, error) {
+func encodeValue(buf []byte, indent, prefix, name string, fv reflect.Value, inArray bool, doc string) ([]byte, error) {
 	switch t := fv.Interface().(type) {
 	case Marshaler:
 		b, err := t.MarshalTOML()
 		if err != nil {
 			return nil, err
 		}
-		return appendNewline(appendDocInline(append(appendKey(buf, name, inArray, arrayTable), b...), doc), inArray, arrayTable), nil
+		return appendNewline(appendDocInline(append(appendKey(appendIndent(buf, indent), name, inArray), b...), doc), inArray), nil
 	case time.Time:
-		return appendNewline(appendDocInline(encodeTime(appendKey(buf, name, inArray, arrayTable), t), doc), inArray, arrayTable), nil
+		return appendNewline(appendDocInline(encodeTime(appendKey(appendIndent(buf, indent), name, inArray), t), doc), inArray), nil
 	}
 	switch fv.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return appendNewline(appendDocInline(encodeInt(appendKey(buf, name, inArray, arrayTable), fv.Int()), doc), inArray, arrayTable), nil
+		return appendNewline(appendDocInline(encodeInt(appendKey(appendIndent(buf, indent), name, inArray), fv.Int()), doc), inArray), nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return appendNewline(appendDocInline(encodeUint(appendKey(buf, name, inArray, arrayTable), fv.Uint()), doc), inArray, arrayTable), nil
+		return appendNewline(appendDocInline(encodeUint(appendKey(appendIndent(buf, indent), name, inArray), fv.Uint()), doc), inArray), nil
 	case reflect.Float32, reflect.Float64:
-		return appendNewline(appendDocInline(encodeFloat(appendKey(buf, name, inArray, arrayTable), fv.Float()), doc), inArray, arrayTable), nil
+		return appendNewline(appendDocInline(encodeFloat(appendKey(appendIndent(buf, indent), name, inArray), fv.Float()), doc), inArray), nil
 	case reflect.Bool:
-		return appendNewline(appendDocInline(encodeBool(appendKey(buf, name, inArray, arrayTable), fv.Bool()), doc), inArray, arrayTable), nil
+		return appendNewline(appendDocInline(encodeBool(appendKey(appendIndent(buf, indent), name, inArray), fv.Bool()), doc), inArray), nil
 	case reflect.String:
-		return appendNewline(appendDocInline(encodeString(appendKey(buf, name, inArray, arrayTable), fv.String()), doc), inArray, arrayTable), nil
+		return appendNewline(appendDocInline(encodeString(appendKey(appendIndent(buf, indent), name, inArray), fv.String()), doc), inArray), nil
 	case reflect.Slice, reflect.Array:
+		if doc != "" {
+			buf = appendNewline(appendDoc(appendIndent(buf, indent), doc), false)
+		}
 		ft := fv.Type().Elem()
 		for ft.Kind() == reflect.Ptr {
 			ft = ft.Elem()
@@ -151,55 +155,58 @@ func encodeValue(buf []byte, prefix, name string, fv reflect.Value, inArray, arr
 			name := tableName(prefix, name)
 			var err error
 			for i := 0; i < fv.Len(); i++ {
-				if buf, err = marshal(append(append(append(buf, '[', '['), name...), ']', ']', '\n'), name, fv.Index(i), false, true); err != nil {
+				if buf, err = marshal(append(append(append(appendIndent(buf, indent), '[', '['), name...), ']', ']', '\n'), indent+indentStr, name, fv.Index(i), false); err != nil {
 					return nil, err
 				}
 			}
 			return buf, nil
 		}
-		buf = append(appendKey(buf, name, inArray, arrayTable), '[')
+		buf = append(appendKey(appendIndent(buf, indent), name, inArray), '[')
 		var err error
 		for i := 0; i < fv.Len(); i++ {
 			if i != 0 {
-				buf = append(buf, ',')
+				buf = append(buf, ',', ' ')
 			}
-			if buf, err = encodeValue(buf, prefix, name, fv.Index(i), true, false, doc); err != nil {
+			if buf, err = encodeValue(buf, "", prefix, name, fv.Index(i), true, ""); err != nil {
 				return nil, err
 			}
 		}
-		return appendNewline(appendDocInline(append(buf, ']'), doc), inArray, arrayTable), nil
+		return appendNewline(append(buf, ']'), inArray), nil
 	case reflect.Struct:
 		name := tableName(prefix, name)
 		if doc != "" {
-			buf = appendNewline(appendDoc(buf, doc), false, false)
+			buf = appendNewline(appendDoc(appendIndent(buf, indent), doc), false)
 		}
-		return marshal(append(append(append(buf, '['), name...), ']', '\n'), name, fv, inArray, arrayTable)
+		return marshal(append(append(append(appendIndent(buf, indent), '['), name...), ']', '\n'), indent+indentStr, name, fv, inArray)
 	case reflect.Interface:
 		var err error
-		if buf, err = encodeInterface(appendKey(buf, name, inArray, arrayTable), fv.Interface()); err != nil {
+		if buf, err = encodeInterface(appendKey(appendIndent(buf, indent), name, inArray), fv.Interface()); err != nil {
 			return nil, err
 		}
-		return appendNewline(buf, inArray, arrayTable), nil
+		return appendNewline(buf, inArray), nil
 	case reflect.Ptr:
 		newElem := fv.Elem()
 		if newElem.IsValid() {
-			return encodeValue(buf, prefix, name, newElem, inArray, arrayTable, doc)
+			return encodeValue(buf, indent, prefix, name, newElem, inArray, doc)
 		} else {
-			return encodeValue(buf, prefix, name, reflect.New(fv.Type().Elem()), inArray, arrayTable, doc)
+			return encodeValue(buf, indent, prefix, name, reflect.New(fv.Type().Elem()), inArray, doc)
 		}
 	case reflect.Map:
 		name := tableName(prefix, name)
-		buf := append(append(append(buf, '['), name...), ']', '\n')
+		if doc != "" {
+			buf = appendNewline(appendDoc(appendIndent(buf, indent), doc), false)
+		}
+		buf = append(append(append(appendIndent(buf, indent), '['), name...), ']', '\n')
 
 		keys := fv.MapKeys()
 		sortedKeys := make([]string, 0, len(keys))
 		for _, key := range keys {
 			var keyStr string
-			switch key.Interface().(type) {
+			switch k := key.Interface().(type) {
 			case fmt.Stringer:
-				keyStr = key.String()
+				keyStr = k.String()
 			case string:
-				keyStr = key.Interface().(string)
+				keyStr = k
 			}
 			sortedKeys = append(sortedKeys, keyStr)
 		}
@@ -207,7 +214,7 @@ func encodeValue(buf []byte, prefix, name string, fv reflect.Value, inArray, arr
 
 		var err error
 		for _, key := range sortedKeys {
-			buf, err = encodeValue(buf, name, key, fv.MapIndex(reflect.ValueOf(key)), inArray, arrayTable, doc)
+			buf, err = encodeValue(buf, indent+indentStr, name, key, fv.MapIndex(reflect.ValueOf(key)), inArray, "")
 			if err != nil {
 				return nil, err
 			}
@@ -219,24 +226,28 @@ func encodeValue(buf []byte, prefix, name string, fv reflect.Value, inArray, arr
 
 func appendDocInline(buf []byte, doc string) []byte {
 	if doc != "" {
-		return append(append(append(append(buf, ' '), '#'), ' '), doc...)
+		return append(append(buf, ' ', '#', ' '), doc...)
 	} else {
 		return buf
 	}
 }
 
 func appendDoc(buf []byte, doc string) []byte {
-	return appendDocInline(buf, doc)[1:]
+	return append(buf, appendDocInline(nil, doc)[1:]...)
 }
 
-func appendKey(buf []byte, key string, inArray, arrayTable bool) []byte {
+func appendKey(buf []byte, key string, inArray bool) []byte {
 	if !inArray {
-		return append(append(buf, key...), '=')
+		return append(append(buf, key...), ' ', '=', ' ')
 	}
 	return buf
 }
 
-func appendNewline(buf []byte, inArray, arrayTable bool) []byte {
+func appendIndent(buf []byte, indent string) []byte {
+	return append(buf, indent...)
+}
+
+func appendNewline(buf []byte, inArray bool) []byte {
 	if !inArray {
 		return append(buf, '\n')
 	}
