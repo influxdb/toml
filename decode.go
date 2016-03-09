@@ -132,7 +132,7 @@ func UnmarshalTable(t *ast.Table, v interface{}) (err error) {
 			fv, fieldName, found := findField(rv, key)
 			if !found {
 				if l := getLogger(); l != nil {
-					l.Println("line %d: field corresponding to `%s' is not defined in `%T'", av.Line, key, v)
+					l.Printf("line %d: field corresponding to `%s' is not defined in `%T'", av.Line, key, v)
 				}
 				continue
 			}
@@ -155,7 +155,7 @@ func UnmarshalTable(t *ast.Table, v interface{}) (err error) {
 			fv, fieldName, found := findField(rv, key)
 			if !found {
 				if l := getLogger(); l != nil {
-					l.Println("line %d: field corresponding to `%s' is not defined in `%T'", av.Line, key, v)
+					l.Printf("line %d: field corresponding to `%s' is not defined in `%T'", av.Line, key, v)
 				}
 				continue
 			}
@@ -192,7 +192,7 @@ func UnmarshalTable(t *ast.Table, v interface{}) (err error) {
 			fv, fieldName, found := findField(rv, key)
 			if !found {
 				if l := getLogger(); l != nil {
-					l.Println("line %d: field corresponding to `%s' is not defined in `%T'", av[0].Line, key, v)
+					l.Printf("line %d: field corresponding to `%s' is not defined in `%T'", av[0].Line, key, v)
 				}
 				continue
 			}
@@ -534,7 +534,7 @@ func (p *toml) setArrayTable(t *ast.Table, buf []rune, begin, end int) {
 	}
 	last := names[len(names)-1]
 	tbl := &ast.Table{
-		Position: ast.Position{begin, end},
+		Position: ast.Position{Begin: begin, End: end},
 		Line:     p.line,
 		Name:     last,
 		Type:     ast.TableTypeArray,

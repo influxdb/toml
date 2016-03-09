@@ -1,6 +1,7 @@
 package toml_test
 
 import (
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -18,37 +19,37 @@ func TestMarshal(t *testing.T) {
 		v      interface{}
 		expect string
 	}{
-		{struct{ Name string }{"alice"}, "name=\"alice\"\n"},
-		{struct{ Age int }{7}, "age=7\n"},
+		{struct{ Name string }{"alice"}, "name = \"alice\"\n"},
+		{struct{ Age int }{7}, "age = 7\n"},
 		{struct {
 			Name string
 			Age  int
-		}{"alice", 7}, "name=\"alice\"\nage=7\n"},
+		}{"alice", 7}, "name = \"alice\"\nage = 7\n"},
 		{struct {
 			Name string `toml:"-"`
 			Age  int
-		}{"alice", 7}, "age=7\n"},
+		}{"alice", 7}, "age = 7\n"},
 		{struct {
 			Name string `toml:"my_name"`
-		}{"bob"}, "my_name=\"bob\"\n"},
+		}{"bob"}, "my_name = \"bob\"\n"},
 		{struct {
 			Name string `toml:"my_name,omitempty"`
-		}{"bob"}, "my_name=\"bob\"\n"},
+		}{"bob"}, "my_name = \"bob\"\n"},
 		{struct {
 			Name string `toml:",omitempty"`
-		}{"bob"}, "name=\"bob\"\n"},
+		}{"bob"}, "name = \"bob\"\n"},
 		{struct {
 			Name string `toml:",omitempty"`
 		}{""}, ""},
 		{struct {
 			Name map[string]string `toml:"name"`
-		}{map[string]string{"foo": "bar", "baz": "quux"}}, "[name]\nbaz=\"quux\"\nfoo=\"bar\"\n"},
+		}{map[string]string{"foo": "bar", "baz": "quux"}}, "[name]\n    baz = \"quux\"\n    foo = \"bar\"\n"},
 		{struct {
 			Preferences map[string]iceCreamPreference `toml:"preferences"`
-		}{map[string]iceCreamPreference{"tim": iceCreamPreference{"Vanilla", 3}}}, "[preferences]\n[preferences.tim]\nflavor=\"Vanilla\"\nscoops=3\n"},
+		}{map[string]iceCreamPreference{"tim": iceCreamPreference{"Vanilla", 3}}}, "[preferences]\n    [preferences.tim]\n        flavor = \"Vanilla\"\n        scoops = 3\n"},
 		{struct {
 			Name string `toml:"name" doc:"The name of the person"`
-		}{"bob"}, "name=\"bob\" # The name of the person\n"},
+		}{"bob"}, "name = \"bob\" # The name of the person\n"},
 	} {
 		b, err := toml.Marshal(v.v)
 		var actual interface{} = err
@@ -183,104 +184,104 @@ func TestMarshalWhole(t *testing.T) {
 				},
 			},
 			`[table]
-key="value"
-[table.subtable]
-key="another value"
-[table.inline]
-[table.inline.name]
-first="Tom"
-last="Preston-Werner"
-[table.inline.point]
-x=1
-y=2
+    key = "value"
+    [table.subtable]
+        key = "another value"
+    [table.inline]
+        [table.inline.name]
+            first = "Tom"
+            last = "Preston-Werner"
+        [table.inline.point]
+            x = 1
+            y = 2
 [x]
-[x.y]
-[x.y.z]
-[x.y.z.w]
+    [x.y]
+        [x.y.z]
+            [x.y.z.w]
 [string]
-[string.basic]
-basic="I'm a string. \"You can quote me\". Name\tJosé\nLocation\tSF."
-[string.multiline]
-key1="One\nTwo"
-key2=""
-key3=""
-[string.multiline.continued]
-key1="The quick brown fox jumps over the lazy dog."
-key2=""
-key3=""
-[string.literal]
-winpath="C:\\Users\\nodejs\\templates"
-winpath2="\\\\ServerX\\admin$\\system32\\"
-quoted="Tom \"Dubs\" Preston-Werner"
-regex="<\\i\\c*\\s*>"
-[string.literal.multiline]
-regex2="I [dw]on't need \\d{2} apples"
-lines="The first newline is\ntrimmed in raw strings.\n   All other whitespace\n   is preserved.\n"
+    [string.basic]
+        basic = "I'm a string. \"You can quote me\". Name\tJosé\nLocation\tSF."
+    [string.multiline]
+        key1 = "One\nTwo"
+        key2 = ""
+        key3 = ""
+        [string.multiline.continued]
+            key1 = "The quick brown fox jumps over the lazy dog."
+            key2 = ""
+            key3 = ""
+    [string.literal]
+        winpath = "C:\\Users\\nodejs\\templates"
+        winpath2 = "\\\\ServerX\\admin$\\system32\\"
+        quoted = "Tom \"Dubs\" Preston-Werner"
+        regex = "<\\i\\c*\\s*>"
+        [string.literal.multiline]
+            regex2 = "I [dw]on't need \\d{2} apples"
+            lines = "The first newline is\ntrimmed in raw strings.\n   All other whitespace\n   is preserved.\n"
 [integer]
-key1=99
-key2=42
-key3=0
-key4=-17
-[integer.underscores]
-key1=1000
-key2=5349221
-key3=12345
+    key1 = 99
+    key2 = 42
+    key3 = 0
+    key4 = -17
+    [integer.underscores]
+        key1 = 1000
+        key2 = 5349221
+        key3 = 12345
 [float]
-[float.fractional]
-key1=1e+00
-key2=3.1415e+00
-key3=-1e-02
-[float.exponent]
-key1=5e+22
-key2=1e+06
-key3=-2e-02
-[float.both]
-key=6.626e-34
-[float.underscores]
-key1=9.224617445991227e+06
-key2=1e+100
+    [float.fractional]
+        key1 = 1e+00
+        key2 = 3.1415e+00
+        key3 = -1e-02
+    [float.exponent]
+        key1 = 5e+22
+        key2 = 1e+06
+        key3 = -2e-02
+    [float.both]
+        key = 6.626e-34
+    [float.underscores]
+        key1 = 9.224617445991227e+06
+        key2 = 1e+100
 [boolean]
-true=true
-false=false
+    true = true
+    false = false
 [datetime]
-key1=1979-05-27T07:32:00Z
-key2=1979-05-27T00:32:00-07:00
-key3=1979-05-27T00:32:00.999999-07:00
+    key1 = 1979-05-27T07:32:00Z
+    key2 = 1979-05-27T00:32:00-07:00
+    key3 = 1979-05-27T00:32:00.999999-07:00
 [array]
-key1=[1,2,3]
-key2=["red","yellow","green"]
-key3=[[1,2],[3,4,5]]
-key4=[[1,2],["a","b","c"]]
-key5=[1,2,3]
-key6=[1,2]
+    key1 = [1, 2, 3]
+    key2 = ["red", "yellow", "green"]
+    key3 = [[1, 2], [3, 4, 5]]
+    key4 = [[1, 2], ["a", "b", "c"]]
+    key5 = [1, 2, 3]
+    key6 = [1, 2]
 [[products]]
-name="Hammer"
-sku=738594937
-color=""
+    name = "Hammer"
+    sku = 738594937
+    color = ""
 [[products]]
-name=""
-sku=0
-color=""
+    name = ""
+    sku = 0
+    color = ""
 [[products]]
-name="Nail"
-sku=284758393
-color="gray"
+    name = "Nail"
+    sku = 284758393
+    color = "gray"
 [[fruit]]
-name="apple"
-[fruit.physical]
-color="red"
-shape="round"
-[[fruit.variety]]
-name="red delicious"
-[[fruit.variety]]
-name="granny smith"
+    name = "apple"
+    [fruit.physical]
+        color = "red"
+        shape = "round"
+    [[fruit.variety]]
+        name = "red delicious"
+    [[fruit.variety]]
+        name = "granny smith"
 [[fruit]]
-name="banana"
-[fruit.physical]
-color=""
-shape=""
-[[fruit.variety]]
-name="plantain"
+    name = "banana"
+    [fruit.physical]
+        color = ""
+        shape = ""
+    [[fruit.variety]]
+        name = "plantain"
 `,
 		},
 	} {
@@ -288,12 +289,12 @@ name="plantain"
 		var actual interface{} = err
 		var expect interface{} = nil
 		if !reflect.DeepEqual(actual, expect) {
-			t.Errorf(`Marshal(%#v) => %#v; want %#v`, v.v, actual, expect)
+			t.Errorf("Marshal=>\ngot-------------\n%s\nwant-------------\n%s", actual, expect)
 		}
 		actual = string(b)
 		expect = v.expect
 		if !reflect.DeepEqual(actual, expect) {
-			t.Errorf(`Marshal(%#v); v => %#v; want %#v`, v.v, actual, expect)
+			t.Errorf("Marshal=>\ngot-------------\n%s\nwant-------------\n%s", actual, expect)
 		}
 
 		// test for reversible.
@@ -301,12 +302,12 @@ name="plantain"
 		actual = toml.Unmarshal(b, &dest)
 		expect = nil
 		if !reflect.DeepEqual(actual, expect) {
-			t.Errorf(`Unmarshal after Marshal => %#v; want %#v`, actual, expect)
+			t.Errorf("Unmarshal after Marshal=>\ngot-------------\n%s\nwant-------------\n%s", actual, expect)
 		}
 		actual = dest
 		expect = v.v
 		if !reflect.DeepEqual(actual, expect) {
-			t.Errorf(`Unmarshal after Marshal => %#v; want %#v`, v, actual, expect)
+			t.Errorf("Unmarshal after Marshal=>\ngot-------------\n%s\nwant-------------\n%s", actual, expect)
 		}
 	}
 }
@@ -327,11 +328,11 @@ func TestMarshalPointer(t *testing.T) {
 		&Profession{"Professor", "CS"},
 	}
 
-	expect := `active=true
-name="Foo Bar"
+	expect := `active = true
+name = "Foo Bar"
 [occupation]
-name="Professor"
-department="CS"
+    name = "Professor"
+    department = "CS"
 `
 	actual, err := toml.Marshal(&foo)
 	if err != nil {
@@ -339,7 +340,7 @@ department="CS"
 	}
 
 	if !reflect.DeepEqual(string(actual), expect) {
-		t.Errorf(`Marshal(%#v); v => %#v; want %#v`, foo, string(actual), expect)
+		t.Errorf("Marshal=>\ngot-------------\n%s\nwant-------------\n%s", string(actual), expect)
 	}
 }
 
@@ -378,22 +379,22 @@ func TestMarshal_MixedStructMap(t *testing.T) {
 		t.Errorf(`Error marshalling example: %s`, err.Error())
 	}
 
-	expect := `store_name="Arby's"
-cuisine="American"
+	expect := `store_name = "Arby's"
+cuisine = "American"
 [locations]
-[locations.Boston]
-x=1
-y=2
+    [locations.Boston]
+        x = 1
+        y = 2
 [[menu]]
-name="Burger"
-price=12
+    name = "Burger"
+    price = 12
 [[menu]]
-name="Fries"
-price=4
+    name = "Fries"
+    price = 4
 `
 
 	if string(str) != expect {
-		t.Errorf(`Marshal => %#v; want %#v`, string(str), expect)
+		t.Errorf("Marshal=>\ngot-------------\n%s\nwant-------------\n%s", string(str), expect)
 	}
 
 	var out store
@@ -402,4 +403,91 @@ price=4
 	if !reflect.DeepEqual(out, foo) {
 		t.Errorf(`Unmarshal => %#v; want %#v`, out, foo)
 	}
+}
+
+func ExampleNewEncoder() {
+	enc := toml.NewEncoder(os.Stdout)
+	type SubConfig struct {
+		Field1 string `toml:"f1" doc:"f1 doc"`
+		Field2 string `toml:"f2" doc:"f2 doc"`
+	}
+	type NestedConfig struct {
+		Name      string    `toml:"name" doc:"name doc"`
+		SubConfig SubConfig `toml:"sub" doc:"sub config doc"`
+	}
+	type Config struct {
+		Int          int               `toml:"int" doc:"int doc"`
+		Float        float64           `toml:"float" doc:"float doc"`
+		Str          string            `toml:"str" doc:"str doc"`
+		Slice        []string          `toml:"slice" doc:"slice doc"`
+		Array        [3]string         `toml:"array" doc:"array doc"`
+		Table        map[string]string `toml:"table" doc:"table doc"`
+		Subtable     SubConfig         `toml:"sub-table" doc:"sub-table doc"`
+		SliceConfig  []SubConfig       `toml:"slice-config" doc:"slice of struct doc"`
+		NestedConfig NestedConfig      `toml:"nested" doc:"nested doc"`
+	}
+	c := Config{
+		Int:   1,
+		Float: 1.5,
+		Str:   "str",
+		Slice: []string{"1", "2", "3", "4"},
+		Array: [3]string{"3", "2", "1"},
+		Table: map[string]string{
+			"k1": "v1",
+			"k2": "v2",
+		},
+		Subtable: SubConfig{
+			Field1: "f1",
+			Field2: "f2",
+		},
+		SliceConfig: []SubConfig{
+			{
+				Field1: "a1",
+				Field2: "a2",
+			},
+			{
+				Field1: "b1",
+				Field2: "b2",
+			},
+		},
+		NestedConfig: NestedConfig{
+			Name: "nested",
+			SubConfig: SubConfig{
+				Field1: "c1",
+				Field2: "c2",
+			},
+		},
+	}
+	enc.Encode(c)
+	//Output:
+	// int = 1 # int doc
+	// float = 1.5e+00 # float doc
+	// str = "str" # str doc
+	// # array doc
+	// array = ["3", "2", "1"]
+	// # slice doc
+	// slice = ["1", "2", "3", "4"]
+	// # table doc
+	// [table]
+	//     k1 = "v1"
+	//     k2 = "v2"
+	// # sub-table doc
+	// [sub-table]
+	//     f1 = "f1" # f1 doc
+	//     f2 = "f2" # f2 doc
+	// # slice of struct doc
+	// [[slice-config]]
+	//     f1 = "a1" # f1 doc
+	//     f2 = "a2" # f2 doc
+	// [[slice-config]]
+	//     f1 = "b1" # f1 doc
+	//     f2 = "b2" # f2 doc
+	// # nested doc
+	// [nested]
+	//     name = "nested" # name doc
+	//     # sub config doc
+	//     [nested.sub]
+	//         f1 = "c1" # f1 doc
+	//         f2 = "c2" # f2 doc
+
 }
