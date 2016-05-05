@@ -41,6 +41,12 @@ func findField(rv reflect.Value, name string) (field reflect.Value, fieldName st
 		rt := rv.Type()
 		for i := 0; i < rt.NumField(); i++ {
 			ft := rt.Field(i)
+			if ft.Anonymous {
+				v, n, found := findField(rv.Field(i), name)
+				if found {
+					return v, n, found
+				}
+			}
 			if !ast.IsExported(ft.Name) {
 				continue
 			}

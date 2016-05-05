@@ -182,6 +182,11 @@ func TestMarshalWhole(t *testing.T) {
 						},
 					},
 				},
+				Child: Child{
+					person{
+						DateOfBirth: "1/1/1970",
+					},
+				},
 			},
 			`[table]
     key = "value"
@@ -282,6 +287,8 @@ func TestMarshalWhole(t *testing.T) {
         shape = ""
     [[fruit.variety]]
         name = "plantain"
+[child]
+    dob = "1/1/1970"
 `,
 		},
 	} {

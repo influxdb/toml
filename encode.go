@@ -87,6 +87,9 @@ func marshal(buf []byte, indent, prefix string, rv reflect.Value, inArray bool) 
 
 	for i := 0; i < rv.NumField(); i++ {
 		ft := rt.Field(i)
+		if ft.Anonymous {
+			return marshal(buf, indent, prefix, rv.Field(i), inArray)
+		}
 		if !ast.IsExported(ft.Name) {
 			continue
 		}
