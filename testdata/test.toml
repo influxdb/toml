@@ -242,3 +242,6 @@ color = "gray"
 
   [[fruit.variety]]
     name = "plantain"
+
+[child]
+  dob = "1/1/1970"

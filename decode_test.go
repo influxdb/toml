@@ -172,6 +172,15 @@ type testStruct struct {
 	Array    Array
 	Products []Product
 	Fruit    []Fruit
+	Child    Child
+}
+
+type person struct {
+	DateOfBirth string `toml:"dob"`
+}
+
+type Child struct {
+	person
 }
 
 func TestUnmarshal(t *testing.T) {
@@ -301,6 +310,7 @@ func TestUnmarshal(t *testing.T) {
 				},
 			},
 		},
+		Child: Child{person{DateOfBirth: "1/1/1970"}},
 	}
 	if !reflect.DeepEqual(actual, expect) {
 		t.Errorf(`toml.Unmarshal(data, v); v => %#v; want %#v`, actual, expect)
