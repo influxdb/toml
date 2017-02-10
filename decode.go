@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/influxdata/toml/ast"
 )
@@ -28,22 +26,7 @@ var (
 	underscoreReplacer = strings.NewReplacer(
 		"_", "",
 	)
-	loggerMu sync.RWMutex
-	logger   *log.Logger
 )
-
-// Set a logger for the parsing operation, to log extraneous configuration options.
-func SetLogger(l *log.Logger) {
-	loggerMu.Lock()
-	defer loggerMu.Unlock()
-	logger = l
-}
-
-func getLogger() *log.Logger {
-	loggerMu.RLock()
-	defer loggerMu.RUnlock()
-	return logger
-}
 
 // Unmarshal parses the TOML data and stores the result in the value pointed to by v.
 //
@@ -131,10 +114,7 @@ func UnmarshalTable(t *ast.Table, v interface{}) (err error) {
 		case *ast.KeyValue:
 			fv, fieldName, found := findField(rv, key)
 			if !found {
-				if l := getLogger(); l != nil {
-					l.Printf("line %d: field corresponding to `%s' is not defined in `%T'", av.Line, key, v)
-				}
-				continue
+				return fmt.Errorf("line %d: field corresponding to `%s' is not defined in `%T'", av.Line, key, v)
 			}
 			switch fv.Kind() {
 			case reflect.Map:
@@ -154,10 +134,7 @@ func UnmarshalTable(t *ast.Table, v interface{}) (err error) {
 		case *ast.Table:
 			fv, fieldName, found := findField(rv, key)
 			if !found {
-				if l := getLogger(); l != nil {
-					l.Printf("line %d: field corresponding to `%s' is not defined in `%T'", av.Line, key, v)
-				}
-				continue
+				return fmt.Errorf("line %d: field corresponding to `%s' is not defined in `%T'", av.Line, key, v)
 			}
 			if err, ok := setUnmarshaler(fv, string(av.Data)); ok {
 				if err != nil {
@@ -191,10 +168,7 @@ func UnmarshalTable(t *ast.Table, v interface{}) (err error) {
 		case []*ast.Table:
 			fv, fieldName, found := findField(rv, key)
 			if !found {
-				if l := getLogger(); l != nil {
-					l.Printf("line %d: field corresponding to `%s' is not defined in `%T'", av[0].Line, key, v)
-				}
-				continue
+				return fmt.Errorf("line %d: field corresponding to `%s' is not defined in `%T'", av[0].Line, key, v)
 			}
 			data := make([]string, 0, len(av))
 			for _, tbl := range av {
@@ -534,7 +508,7 @@ func (p *toml) setArrayTable(t *ast.Table, buf []rune, begin, end int) {
 	}
 	last := names[len(names)-1]
 	tbl := &ast.Table{
-		Position: ast.Position{Begin: begin, End: end},
+		Position: ast.Position{begin, end},
 		Line:     p.line,
 		Name:     last,
 		Type:     ast.TableTypeArray,
