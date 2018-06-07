@@ -47,6 +47,14 @@ func findField(rv reflect.Value, name string) (field reflect.Value, fieldName st
 			if col, _ := extractTag(ft.Tag.Get(fieldTagName)); col == name {
 				return rv.Field(i), ft.Name, true
 			}
+
+			if ft.Anonymous {
+				rva := rv.Field(i)
+				field, name, found := findField(rva, name)
+				if found {
+					return field, name, found
+				}
+			}
 		}
 		for _, name := range []string{
 			strings.Title(name),
