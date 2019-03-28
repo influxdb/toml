@@ -810,6 +810,11 @@ func TestUnmarshal_WithEmbeddedStruct(t *testing.T) {
 	type TestEmbStructATag struct {
 		A string `toml:"a"`
 	}
+	type TestMultiEmbStruct struct {
+		A bool `toml:"a"`
+		B string
+		C bool
+	}
 
 	testUnmarshal(t, []testcase{
 		{
@@ -847,7 +852,7 @@ func TestUnmarshal_WithEmbeddedStruct(t *testing.T) {
 			}{
 				a: "",
 			},
-			err: lineError(1, fmt.Errorf("field corresponding to `a' in struct { toml.TestEmbStructA; A string } cannot be set through TOML")),
+			err: lineError(1, fmt.Errorf("field corresponding to `a' is not defined in struct { a string }")),
 		},
 		{
 			data: `a = "value"`,
@@ -875,6 +880,19 @@ func TestUnmarshal_WithEmbeddedStruct(t *testing.T) {
 				TestEmbStructA
 			}{
 				TestEmbStructA: TestEmbStructA{A: "value"},
+			},
+		},
+		{
+			data: `
+a = true
+b = "value"
+c = true
+`,
+			expect: &struct {
+				d string
+				TestMultiEmbStruct
+			}{
+				TestMultiEmbStruct: TestMultiEmbStruct{A: true, B: "value", C: true},
 			},
 		},
 	})

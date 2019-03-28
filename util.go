@@ -22,7 +22,8 @@ type fieldInfo struct {
 
 func makeFieldCache(cfg *Config, rt reflect.Type) fieldCache {
 	named, auto := make(map[string]fieldInfo), make(map[string]fieldInfo)
-	var descend func(index []int, rt reflect.Type)
+
+	var descend func([]int, reflect.Type)
 	descend = func(index []int, rt reflect.Type) {
 		for i := 0; i < rt.NumField(); i++ {
 			ft := rt.Field(i)
@@ -38,7 +39,9 @@ func makeFieldCache(cfg *Config, rt reflect.Type) fieldCache {
 				continue
 			}
 
-			info := fieldInfo{index: append(index, ft.Index...), name: ft.Name, ignored: col == "-"}
+			indexx := append(append([]int{}, index...), ft.Index...)
+			info := fieldInfo{index: indexx, name: ft.Name, ignored: col == "-"}
+
 			if col == "" || col == "-" {
 				name := cfg.NormFieldName(rt, ft.Name)
 				// discard any duplicate names
@@ -54,6 +57,7 @@ func makeFieldCache(cfg *Config, rt reflect.Type) fieldCache {
 			}
 		}
 	}
+
 	descend([]int{}, rt)
 	return fieldCache{named, auto}
 }
