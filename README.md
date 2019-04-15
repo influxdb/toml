@@ -373,7 +373,7 @@ Note: `encoding.TextUnmarshaler` and `encoding.TextMarshaler` should be preferre
 simple (scalar) values because they're also compatible with other formats like JSON or
 YAML.
 
-[See the UnmarshalerRec example](https://godoc.org/github.com/naoina/toml/#example_UnmarshalerRec).
+[See the UnmarshalerRec example](https://godoc.org/github.com/influxdata/toml/#example_UnmarshalerRec).
 
 ### Using the `toml.Unmarshaler` interface
 
@@ -381,7 +381,7 @@ If you want to deal with raw TOML syntax, use the `Unmarshaler` and `Marshaler`
 interfaces. Their input and output is raw TOML syntax. As such, these interfaces are
 useful if you want to handle TOML at the syntax level.
 
-[See the Unmarshaler example](https://godoc.org/github.com/naoina/toml/#example_Unmarshaler).
+[See the Unmarshaler example](https://godoc.org/github.com/influxdata/toml/#example_Unmarshaler).
 
 ## API documentation
 

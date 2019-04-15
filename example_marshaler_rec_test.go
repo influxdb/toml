@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/naoina/toml"
+	"github.com/influxdata/toml"
 )
 
 // This example shows how the UnmarshalerRec interface can be used to apply field

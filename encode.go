@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/naoina/toml/ast"
+	"github.com/influxdata/toml/ast"
 )
 
 const (

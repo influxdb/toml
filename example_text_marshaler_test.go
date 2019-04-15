@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/naoina/toml"
+	"github.com/influxdata/toml"
 )
 
 func Example_textUnmarshaler() {

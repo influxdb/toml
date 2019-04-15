@@ -3,7 +3,7 @@ package toml_test
 import (
 	"fmt"
 
-	"github.com/naoina/toml"
+	"github.com/influxdata/toml"
 )
 
 // This example shows how the Unmarshaler interface can be used to access the TOML source
