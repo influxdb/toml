@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/influxdata/toml/ast"
 	"github.com/kylelemons/godebug/pretty"
 )
 
@@ -1408,4 +1409,50 @@ func TestUnmarshal_WithInterface(t *testing.T) {
 		{`[v]`, lineError(1, &unmarshalTypeError{"table", "struct or map", nonemptyIfType}), map[string]nonemptyIf{}},
 		{`[[v]]`, lineError(1, &unmarshalTypeError{"array table", "slice", nonemptyIfType}), map[string]nonemptyIf{}},
 	})
+}
+
+const ErrorString = "line 2: field corresponding to `not_a_field' is not defined in toml.testStruct"
+
+func TestLineError(t *testing.T) {
+	testCases := []struct{ name, tomString, errorString string }{
+		{"windowsCRLF", "[[inputs.test_struct]]\r\n\tnot_a_field = \"true\"\r\n", ErrorString},
+		{"unixLF", "[[inputs.test_struct]]\n\tnot_a_field = \"true\"\n", ErrorString},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mainTable, err := Parse([]byte(tc.tomString))
+			if err != nil {
+				t.Errorf("Parse error: %s", err.Error())
+			}
+			inputs, ok := mainTable.Fields["inputs"]
+			if !ok {
+				t.Error("Missing inputs")
+			}
+			subTable, ok := inputs.(*ast.Table)
+			if !ok {
+				t.Error("Expected Table")
+			}
+			if len(subTable.Fields) != 1 {
+				t.Error("Invalid subTable")
+			}
+			for _, val := range subTable.Fields {
+				tables, ok := val.([]*ast.Table)
+				if !ok {
+					t.Errorf("Expected []*ast.Table, got %#v", tables)
+				}
+				if len(tables) != 1 {
+					t.Error("Invalid tables")
+				}
+				table := tables[0]
+				str := &testStruct{}
+				err = UnmarshalTable(table, str)
+				if err == nil {
+					t.Error("Expected error")
+				}
+				if ErrorString != err.Error() {
+					t.Errorf("Expected: %s\n,      got: %s", ErrorString, err.Error())
+				}
+			}
+		})
+	}
 }
