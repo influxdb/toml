@@ -18,7 +18,11 @@ newline <- newlineW / newlineU
 newlineW <- <'\0xd\0xa'+ > { p.AddLineCount((end - begin)/2) } 
 newlineU <- <'\0xd'+ / '\0xa'+ > { p.AddLineCount(end - begin) } 
 
-ws <- ' '* / '\0x9'*
+ws <- (
+    ' '
+    / '\0x9'
+)*
+
 wsnl <- (
     ' ' 
    / '\0x9'

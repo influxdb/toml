@@ -240,7 +240,7 @@ color = "gray"
     name = "granny smith"
 
 [[fruit]]
-  name = "banana"
+	name = "banana"
 
-  [[fruit.variety]]
-    name = "plantain"
+	[[fruit.variety]]
+		name = "plantain"
