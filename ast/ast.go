@@ -53,7 +53,12 @@ func (i *Integer) Source() string {
 }
 
 func (i *Integer) Int() (int64, error) {
-	return strconv.ParseInt(i.Value, 10, 64)
+	intValue, err := strconv.ParseInt(i.Value, 10, 64)
+	if err == nil {
+		return intValue, nil
+	}
+	floatValue, err := strconv.ParseFloat(i.Value, 64)
+	return int64(floatValue), err
 }
 
 type Float struct {
