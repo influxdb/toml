@@ -459,7 +459,7 @@ func TestUnmarshal_WithFloat(t *testing.T) {
 		{`floatval = -10.2E5`, nil, &testStruct{}, &testStruct{-10.2e5}},
 		{`floatval = 5e+22`, nil, &testStruct{}, &testStruct{5e+22}},
 		{`floatval = 1e6`, nil, &testStruct{}, &testStruct{1e6}},
-		{`floatval = -2E-2`, nil, &testStruct{}, &testStruct{-2E-2}},
+		{`floatval = -2E-2`, nil, &testStruct{}, &testStruct{-2e-2}},
 		{`floatval = 6.626e-34`, nil, &testStruct{}, &testStruct{6.626e-34}},
 		{`floatval = 9_224_617.445_991_228_313`, nil, &testStruct{}, &testStruct{9224617.445991228313}},
 		{`floatval = 1e1_00`, nil, &testStruct{}, &testStruct{1e100}},

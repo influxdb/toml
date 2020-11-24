@@ -304,8 +304,12 @@ func setFloat(fv reflect.Value, v *ast.Float) error {
 		fv.SetFloat(f)
 	case reflect.Interface:
 		fv.Set(reflect.ValueOf(f))
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		fv.SetInt(int64(f))
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		fv.SetUint(uint64(f))
 	default:
-		return fmt.Errorf("`%v' is not float32 or float64", fv.Type())
+		return fmt.Errorf("`%v' is not float32 or float64 current kind is %v", fv.Type(), fv.Kind())
 	}
 	return nil
 }
@@ -508,7 +512,7 @@ func (p *toml) setArrayTable(t *ast.Table, buf []rune, begin, end int) {
 	}
 	last := names[len(names)-1]
 	tbl := &ast.Table{
-		Position: ast.Position{begin, end},
+		Position: ast.Position{Begin: begin, End: end},
 		Line:     p.line,
 		Name:     last,
 		Type:     ast.TableTypeArray,

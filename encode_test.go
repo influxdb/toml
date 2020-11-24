@@ -306,7 +306,7 @@ name="plantain"
 		actual = dest
 		expect = v.v
 		if !reflect.DeepEqual(actual, expect) {
-			t.Errorf(`Unmarshal after Marshal => %#v; want %#v`, v, actual, expect)
+			t.Errorf(`Unmarshal(%#v) after Marshal => %#v; want %#v`, v, actual, expect)
 		}
 	}
 }
